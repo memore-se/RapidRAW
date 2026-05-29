@@ -12,19 +12,19 @@ mod ai_processing;
 mod android_integration;
 mod app_settings;
 mod app_state;
-mod cache_utils;
+pub mod cache_utils;
 mod culling;
 mod denoising;
 mod exif_processing;
 mod export_processing;
 mod file_management;
-mod formats;
-mod gpu_processing;
-mod image_loader;
-mod image_processing;
+pub mod formats;
+pub mod gpu_processing;
+pub mod image_loader;
+pub mod image_processing;
 mod lens_correction;
-mod lut_processing;
-mod mask_generation;
+pub mod lut_processing;
+pub mod mask_generation;
 mod negative_conversion;
 mod panorama_stitching;
 mod panorama_utils;
@@ -513,7 +513,7 @@ fn process_preview_job(
     let final_processed_image_result =
         crate::image_processing::process_and_get_dynamic_image_with_analytics(
             &context,
-            &state,
+            state.inner(),
             &processing_image,
             new_transform_hash,
             RenderRequest {
@@ -820,7 +820,7 @@ fn generate_uncropped_preview(
 
         if let Ok(processed_image) = process_and_get_dynamic_image(
             &context,
-            &state,
+            state.inner(),
             &processing_base,
             unique_hash,
             RenderRequest {
@@ -985,7 +985,7 @@ async fn preview_geometry_transform(
 
             let processed_base = process_and_get_dynamic_image(
                 &context,
-                &state,
+                state.inner(),
                 &preview_base,
                 visual_hash,
                 RenderRequest {
@@ -1167,7 +1167,7 @@ fn generate_preset_preview(
 
     let processed_image = process_and_get_dynamic_image(
         &context,
-        &state,
+        state.inner(),
         &preview_image,
         unique_hash,
         RenderRequest {
@@ -1318,7 +1318,7 @@ async fn generate_all_community_previews(
 
             let processed_image_dynamic = crate::image_processing::process_and_get_dynamic_image(
                 &context,
-                &state,
+                state.inner(),
                 transformed_image.as_ref(),
                 unique_hash,
                 RenderRequest {
@@ -1653,7 +1653,7 @@ fn generate_preview_for_path(
     let unique_hash = calculate_full_job_hash(&source_path_str, &js_adjustments);
     let final_image = process_and_get_dynamic_image(
         &context,
-        &state,
+        state.inner(),
         transformed_image.as_ref(),
         unique_hash,
         RenderRequest {

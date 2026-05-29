@@ -407,6 +407,51 @@ pub fn get_or_init_gpu_context(
     Ok(new_context)
 }
 
+pub fn init_gpu_context_headless(state: &AppState) -> Result<GpuContext, String> {
+    let mut context_lock = state.gpu_context.lock().unwrap();
+    if let Some(context) = &*context_lock {
+        return Ok(context.clone());
+    }
+
+    let instance_desc = wgpu::InstanceDescriptor::new_without_display_handle_from_env();
+    let instance = wgpu::Instance::new(instance_desc);
+
+    let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::HighPerformance,
+        compatible_surface: None,
+        ..Default::default()
+    }))
+    .map_err(|e| format!("Failed to find a wgpu adapter: {}", e))?;
+
+    let mut required_features = wgpu::Features::empty();
+    if adapter
+        .features()
+        .contains(wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES)
+    {
+        required_features |= wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES;
+    }
+
+    let limits = adapter.limits();
+    let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+        label: Some("Processing Device"),
+        required_features,
+        required_limits: limits.clone(),
+        experimental_features: wgpu::ExperimentalFeatures::default(),
+        memory_hints: wgpu::MemoryHints::Performance,
+        trace: wgpu::Trace::Off,
+    }))
+    .map_err(|e| e.to_string())?;
+
+    let new_context = GpuContext {
+        device: Arc::new(device),
+        queue: Arc::new(queue),
+        limits,
+        display: Arc::new(std::sync::Mutex::new(None)),
+    };
+    *context_lock = Some(new_context.clone());
+    Ok(new_context)
+}
+
 fn read_texture_data_roi(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
@@ -1573,7 +1618,7 @@ impl GpuProcessor {
 
 pub fn process_and_get_dynamic_image(
     context: &GpuContext,
-    state: &tauri::State<AppState>,
+    state: &AppState,
     base_image: &DynamicImage,
     transform_hash: u64,
     request: RenderRequest,
@@ -1594,7 +1639,7 @@ pub fn process_and_get_dynamic_image(
 #[allow(clippy::too_many_arguments)]
 pub fn process_and_get_dynamic_image_with_analytics(
     context: &GpuContext,
-    state: &tauri::State<AppState>,
+    state: &AppState,
     base_image: &DynamicImage,
     transform_hash: u64,
     request: RenderRequest,
@@ -1617,7 +1662,7 @@ pub fn process_and_get_dynamic_image_with_analytics(
 #[allow(clippy::too_many_arguments)]
 fn process_and_get_dynamic_image_inner(
     context: &GpuContext,
-    state: &tauri::State<AppState>,
+    state: &AppState,
     base_image: &DynamicImage,
     transform_hash: u64,
     request: RenderRequest,

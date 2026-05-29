@@ -1,5 +1,6 @@
 [package]
 name = "RapidRAW"
+version = "1.5.5"
 description = "A blazingly-fast, non-destructive, and GPU-accelerated RAW image editor built with performance in mind."
 authors = ["Timon Käch"]
 edition = "2024"
@@ -8,6 +9,10 @@ rust-version = "1.95"
 [lib]
 name = "rapidraw_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "rapidraw-cli"
+path = "src/bin/rapidraw-cli.rs"
 
 [dependencies]
 tauri = { version = "2.11", features = [ "macos-private-api", "rustls-tls" ] }

@@ -257,7 +257,7 @@ fn process_image_for_export_pipeline(
 
     process_and_get_dynamic_image(
         context,
-        state,
+        state.inner(),
         transformed_image.as_ref(),
         unique_hash,
         RenderRequest {
@@ -527,7 +527,7 @@ fn export_masks_for_image(
 
             let processed = process_and_get_dynamic_image(
                 context,
-                state,
+                state.inner(),
                 transformed_image.as_ref(),
                 unique_hash,
                 RenderRequest {
@@ -620,7 +620,7 @@ fn export_adjustments_as_lut(
 
     let processed_lut = process_and_get_dynamic_image(
         context,
-        state,
+        state.inner(),
         &identity_image,
         unique_hash,
         RenderRequest {
@@ -1187,7 +1187,7 @@ pub async fn estimate_export_size(
 
     let processed_preview = process_and_get_dynamic_image(
         &context,
-        &state,
+        state.inner(),
         &preview_image,
         unique_hash,
         RenderRequest {
@@ -1366,7 +1366,7 @@ pub async fn estimate_batch_export_size(
 
     let processed_preview = process_and_get_dynamic_image(
         &context,
-        &state,
+        state.inner(),
         &preview_base,
         unique_hash,
         RenderRequest {
